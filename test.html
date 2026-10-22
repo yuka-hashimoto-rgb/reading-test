@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>読み取りテスト</title>
+<style>
+  :root { --ink:#1f2933; --blue:#e8f2fc; --line:#9cc3ec; --accent:#2f7fd1; --muted:#5b6b7a; }
+  * { box-sizing: border-box; }
+  html { font-size:24px; } /* 画面サイズに合わせてJSが自動調整 */
+  html, body { margin:0; background:#fff; color:var(--ink); }
+  body { font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif; height:100vh; height:100dvh; display:flex; flex-direction:column; align-items:center; padding:2.5vh 4vw; overflow:hidden; }
+  main { width:100%; max-width:1400px; flex:1; min-height:0; overflow:hidden; }
+  h1 { font-size:1.15rem; margin:0 0 .6em; padding:.3em .7em; background:var(--blue); border-left:.3em solid var(--line); border-radius:4px; }
+  p { font-size:1rem; line-height:1.9; margin:0 0 1em; }
+  .q { margin:0 0 .6em; }
+  .q h2 { font-size:1rem; line-height:1.4; margin:0 0 .25em; }
+  .q ul { list-style:none; margin:0; padding:0; }
+  .q li { font-size:.92rem; line-height:1.3; padding:.2em .7em; margin-bottom:.2em; border:2px solid var(--line); border-radius:8px; }
+  footer { width:100%; max-width:1400px; padding-top:1vh; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .msg { font-size:.6rem; color:var(--muted); flex:1; text-align:center; }
+  button { font:inherit; font-size:.6rem; padding:.5em 1.2em; border-radius:8px; border:2px solid var(--accent); background:#fff; color:var(--accent); cursor:pointer; }
+  button.next { background:var(--accent); color:#fff; }
+  button[hidden] { display:none; }
+</style>
+</head>
+<body>
+<main id="view"></main>
+<footer>
+  <button id="back" hidden>文章に戻る</button>
+  <span class="msg" id="msg"></span>
+  <button id="next" class="next">質問を見る</button>
+</footer>
+<script>
+const PASSAGE = {
+  title: "勤務初日のご案内",
+  paragraphs: [
+    "勤務初日は、午前9時45分までに店舗へお越しください。<br>勤務時間は10時から19時までです。<br>休憩時間は1時間です。",
+    "出勤したら、店舗の責任者に挨拶をしてください。<br>電車の遅延などで到着が遅れる場合は、わかった時点で担当者に電話で連絡してください。<br>また、勤務中は携帯電話を使用しないでください。"
+  ]
+};
+// 質問ページ用（正解は含めない）
+const QUESTIONS = [
+  { text:"初日は何時までに店舗へ行きますか？", choices:["午前9時30分","午前9時45分","午前10時"] },
+  { text:"電車が遅れている場合、どうしますか？", choices:["到着してから連絡する","わかった時点で担当者に電話する","同僚にだけ連絡する"] },
+  { text:"勤務時間は何時から何時までですか？", choices:["9時45分〜19時","10時〜19時","10時〜18時"] }
+];
+const L = ["A","B","C","D"];
+const $ = id => document.getElementById(id);
+
+// スクロールなしで全文が収まる最大の文字サイズに自動調整
+function fit() {
+  const v = $("view");
+  let u = Math.min(window.innerHeight * 0.06, window.innerWidth * 0.04);
+  document.documentElement.style.fontSize = u + "px";
+  while (u > 12 && (v.scrollHeight > v.clientHeight + 1 || v.scrollWidth > v.clientWidth + 1)) {
+    u -= 0.5;
+    document.documentElement.style.fontSize = u + "px";
+  }
+}
+
+function show(page) {
+  const q = page === "questions";
+  location.hash = q ? "questions" : "";
+  $("view").innerHTML = q
+    ? "<h1>【質問】</h1>" + QUESTIONS.map((x, i) =>
+        `<div class="q"><h2>Q${i+1}. ${x.text}</h2><ul>` +
+        x.choices.map((c, j) => `<li>${L[j]}. ${c}</li>`).join("") + `</ul></div>`).join("")
+    : "<h1>【" + PASSAGE.title + "】</h1>" + PASSAGE.paragraphs.map(t => "<p>" + t + "</p>").join("");
+  $("msg").textContent = q ? "A・B・C のどれか、口頭でお答えください" : "読み終わったら担当者にお知らせください";
+  $("back").hidden = !q;
+  $("next").hidden = q;
+  fit();
+}
+
+$("next").onclick = () => show("questions");
+$("back").onclick = () => show("passage");
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") show("questions");
+  if (e.key === "ArrowLeft") show("passage");
+});
+window.addEventListener("resize", fit);
+show(location.hash === "#questions" ? "questions" : "passage");
+</script>
+</body>
+</html>
